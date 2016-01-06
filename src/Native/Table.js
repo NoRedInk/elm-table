@@ -30,16 +30,10 @@ var make = function make(elm) {
         return i;
     }
 
-    var listToArray = function (xs) {
-        var out = [];
-        while (xs.ctor !== '[]')
-        {
-            out.push(xs._0);
-            xs = xs._1;
-        }
-        return out;
-    };
-
+    /*
+        Intended to be a faster version of List.toArray
+        Preallocates a block array as per https://www.youtube.com/watch?v=UJPdhx5zTaw
+    */
     var fromList = function(list){
         var length = listLength(list);
 
@@ -56,7 +50,6 @@ var make = function make(elm) {
             list = list._1;
             i++;
         }
-        console.log(table);
 
         return {
             ctor: 'Table',
@@ -73,6 +66,17 @@ var make = function make(elm) {
     };
 
     var update = function(i, f, table){
+        var len = table.values.length;
+
+        // when len is bigger than the table
+        // return early. we don't want to
+        // create non-sequential arrays as
+        // they get turned into hashmaps and
+        // lose performance and size bonuses
+        if (i >= len){
+            return table;
+        }
+
         var new_value = f(table.values[i]);
         table.values[i] = new_value;
         return table;
