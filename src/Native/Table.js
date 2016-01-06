@@ -33,6 +33,7 @@ var make = function make(elm) {
         return i;
     }
 
+    // check if all items have the same ctor
     var allSameCtors = function(items){
         var ctor = items[0].ctor;
 
@@ -49,6 +50,7 @@ var make = function make(elm) {
         return true;
     };
 
+    // check if item is an Elm value with only one prop
     var onlyHasSingleValue = function(item){
         return Object.keys(item).length < 3;
     };
@@ -70,6 +72,14 @@ var make = function make(elm) {
         return true;
     };
 
+    /* Create a new table unwrapping Elm values
+
+        values = [Age 5, Age 6, Age 7], valueCtor = Nothing
+
+        becomes
+
+        values = [ 5, 6, 7 ], valueCtor = Just Age
+    */
     var unbox = function(table){
         table.valueCtor = Maybe.Just(table.values[0].ctor);
 
@@ -84,6 +94,10 @@ var make = function make(elm) {
         return table;
     };
 
+    /*
+        use the provided table to figure out
+        the unboxed representation of a value
+    */
     var unboxOne = function(v, table){
         var maybeCtor = table.valueCtor;
         if (maybeCtor === Maybe.Nothing){
@@ -93,6 +107,10 @@ var make = function make(elm) {
         return v._0;
     };
 
+    /*
+        return true if given value needs reboxing to
+        fit into the given table
+    */
     var needsReboxing = function(v, table){
         if (table.valueCtor === Maybe.Nothing){
             return false;
@@ -100,6 +118,9 @@ var make = function make(elm) {
         return v.ctor !== table.valueCtor._0;
     };
 
+    /*
+        Inverse of unbox
+    */
     var rebox = function(table){
         var maybeCtor = table.valueCtor;
         if (maybeCtor === Maybe.Nothing){
