@@ -63,6 +63,10 @@ get : Int -> Table a -> Maybe a
 get =
   Native.Table.get
 
-update : List (Int, a -> a) -> Table a -> Table a
+update : Int -> (a -> b) -> Table a -> Table a
 update =
   Native.Table.update
+
+updateMany : List (Int, a -> a) -> Table a -> Table a
+updateMany =
+  Native.Table.updateMany

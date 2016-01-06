@@ -18,7 +18,8 @@ var make = function make(elm) {
 
     var empty = {
         ctor : 'Table',
-        values : []
+        values : [],
+        valueCtor : Maybe.Nothing
     };
 
     var listLength = function(xs){
@@ -32,6 +33,108 @@ var make = function make(elm) {
         return i;
     }
 
+    var allSameCtors = function(items){
+        var ctor = items[0].ctor;
+
+        if (typeof ctor === "undefined" || ctor === null){
+            return false;
+        }
+
+        for (var i = 1; i < items.length; i++){
+            if (items[i].ctor !== ctor){
+                return false;
+            }
+        }
+
+        return true;
+    };
+
+    var onlyHasSingleValue = function(item){
+        return Object.keys(item).length < 3;
+    };
+
+    /*
+        An array is unboxable if:
+            - all the ctors used were the same
+            - the ctor only had a single argument
+    */
+    var isUnboxable = function(table){
+        if (!allSameCtors(table.values)){
+            return false;
+        }
+
+        if (!onlyHasSingleValue(table.values[0])){
+            return false;
+        }
+
+        return true;
+    };
+
+    var unbox = function(table){
+        table.valueCtor = Maybe.Just(table.values[0].ctor);
+
+        var newArray = new Array(table.values.length);
+
+        for (var i = 0; i < table.values.length; i++){
+            newArray[i] = table.values[i]._0;
+        }
+
+        table.values = newArray;
+
+        return table;
+    };
+
+    var unboxOne = function(v, table){
+        var maybeCtor = table.valueCtor;
+        if (maybeCtor === Maybe.Nothing){
+            return v;
+        }
+
+        return v._0;
+    };
+
+    var needsReboxing = function(v, table){
+        if (table.valueCtor === Maybe.Nothing){
+            return false;
+        }
+        return v.ctor !== table.valueCtor._0;
+    };
+
+    var rebox = function(table){
+        var maybeCtor = table.valueCtor;
+        if (maybeCtor === Maybe.Nothing){
+            return table;
+        }
+
+        var ctor = maybeCtor._0;
+        table.valueCtor = Maybe.Nothing;
+
+        var newArray = new Array(table.values.length);
+
+        for (var i = 0; i < table.values.length; i++){
+            newArray[i] = {
+                ctor: ctor,
+                _0: table.values[i]
+            };
+        }
+
+        table.values = newArray;
+        return table;
+    };
+
+    var reboxOne = function(i, table){
+        var maybeCtor = table.valueCtor;
+        if (maybeCtor === Maybe.Nothing){
+            return table.values[i];
+        }
+
+        var ctor = maybeCtor._0;
+        return {
+            ctor: ctor,
+            _0: table.values[i]
+        };
+    };
+
     /*
         Intended to be a faster version of List.toArray
         Preallocates a block array as per https://www.youtube.com/watch?v=UJPdhx5zTaw
@@ -44,19 +147,26 @@ var make = function make(elm) {
             return empty;
         }
 
-        var table = new Array(length);
+        var array = new Array(length);
         var i = 0;
 
         while (list.ctor !== '[]') {
-            table[i] = list._0;
+            array[i] = list._0;
             list = list._1;
             i++;
         }
 
-        return {
+        var table = {
             ctor: 'Table',
-            values: table
+            values: array,
+            valueCtor: Maybe.Nothing
         };
+
+        if (isUnboxable(table)){
+            table = unbox(table);
+        }
+
+        return table;
     };
 
     var length = function(table){
@@ -79,7 +189,7 @@ var make = function make(elm) {
             return Maybe.Nothing;
         }
 
-        return Maybe.Just(table.values[i]);
+        return Maybe.Just(reboxOne(i, table));
     };
 
     var update = function(i, f, table){
@@ -89,8 +199,18 @@ var make = function make(elm) {
             return table;
         }
 
-        var new_value = f(table.values[i]);
-        table.values[i] = new_value;
+        var newValue = f(reboxOne(i, table));
+
+        if (needsReboxing(newValue, table)){
+            table = rebox(table);
+        }
+
+        if (table.valueCtor === Maybe.Nothing){
+            table.values[i] = newValue;
+            return table;
+        }
+
+        table.values[i] = unboxOne(newValue, table);
         return table;
     };
 
@@ -101,6 +221,10 @@ var make = function make(elm) {
 
             table = update(index, f);
         });
+
+        if (isUnboxable(table)){
+            table = unbox(table);
+        }
 
         return table;
     };
@@ -182,8 +306,8 @@ var make = function make(elm) {
         get: F2(get),
         map: F2(map),
         indexedMap: F2(indexedMap),
-        update: F2(update),
-        updateMany: F2(updateMany),
+        update: F3(update),
+        updateMany: F3(updateMany),
         foldr: F3(foldr),
         foldl: F3(foldl),
         indexedFoldr: F3(indexedFoldr),

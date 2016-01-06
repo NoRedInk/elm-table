@@ -3,7 +3,13 @@ module Main where
 import Graphics.Element exposing (show)
 import Table
 
+type UnboxableType = Unbox Int | Other Int
+
 main = show
-    <| Table.get 1
-    <| Table.indexedMap (\i v -> i + 1)
-    <| Table.fromList [1, 2, 3]
+    <| Table.update 1
+        (\o ->
+            case o of
+                Unbox v -> Other <| v + 1
+                Other v -> Unbox <| v + 2
+        )
+    <| Table.fromList [Unbox 1, Unbox 2, Unbox 3]
