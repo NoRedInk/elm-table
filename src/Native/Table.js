@@ -14,6 +14,8 @@ var make = function make(elm) {
     // values for speed reasons
     if (elm.Native.Table.values) return elm.Native.Table.values;
 
+    var Maybe = Elm.Maybe.make(elm);
+
     var empty = {
         ctor : 'Table',
         values : []
@@ -61,19 +63,29 @@ var make = function make(elm) {
         return table.values.length;
     };
 
+    // when len is bigger than the table
+    // return early. we don't want to
+    // create non-sequential arrays as
+    // they get turned into hashmaps and
+    // lose performance and size bonuses
+    var isOutOfBounds = function(i, len){
+        return (i < 0 || i >= len);
+    };
+
     var get = function(i, table){
-        return table.values[i];
+        var len = table.values.length;
+
+        if (isOutOfBounds(i, len)){
+            return Maybe.Nothing;
+        }
+
+        return Maybe.Just(table.values[i]);
     };
 
     var update = function(i, f, table){
         var len = table.values.length;
 
-        // when len is bigger than the table
-        // return early. we don't want to
-        // create non-sequential arrays as
-        // they get turned into hashmaps and
-        // lose performance and size bonuses
-        if (i >= len){
+        if (isOutOfBounds(i, len)){
             return table;
         }
 
@@ -167,7 +179,7 @@ var make = function make(elm) {
         empty: empty,
         fromList: fromList,
         length: length,
-        get: get,
+        get: F2(get),
         map: F2(map),
         indexedMap: F2(indexedMap),
         update: F2(update),
