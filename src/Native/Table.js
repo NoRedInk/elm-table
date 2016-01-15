@@ -1,18 +1,12 @@
-// make is a function that takes an instance of the
-// elm runtime
-// returns an object where:
-//      keys are names to be accessed in pure Elm
-//      are either functions or
-var make = function make(elm) {
-	// If Native isn't already bound on elm, bind it!
-	elm.Native = elm.Native || {};
-	// then the same for our module
-	elm.Native.Table = elm.Native.Table || {};
+Elm.Native.Table = {};
+Elm.Native.Table.make = function(localRuntime) {
 
-	// ` is where the object returned by make ends up internally
-	// return if it's already set, since you only want one definition of
-	// for speed reasons
-	if (elm.Native.Table) return elm.Native.Table;
+	localRuntime.Native = localRuntime.Native || {};
+	localRuntime.Native.Table = localRuntime.Native.Table || {};
+	if (localRuntime.Native.Table.values)
+	{
+		return localRuntime.Native.Table.values;
+	}
 
 	var Maybe = Elm.Maybe.make(elm);
 
@@ -174,8 +168,7 @@ var make = function make(elm) {
 	};
 
 
-	// return the object of your module's stuff!
-	return {
+	return localRuntime.Native.Table.values = {
 		empty: empty,
 		fromList: fromList,
 		length: length,
@@ -190,9 +183,3 @@ var make = function make(elm) {
 		indexedFoldl: F3(indexedFoldl)
 	};
 };
-
-// setup code for Table
-// Elm.Native.Table should be an object with
-// a property `make` which is specified above
-Elm.Native.Table = {};
-Elm.Native.Table.make = make;
