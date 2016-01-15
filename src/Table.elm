@@ -9,6 +9,10 @@ empty : Table a
 empty =
   Native.Table.empty
 
+isEmpty : Table a -> Bool
+isEmpty table =
+  empty == table
+
 fromList : List a -> Table a
 fromList =
   Native.Table.fromList
