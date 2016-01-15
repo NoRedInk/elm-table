@@ -1,11 +1,9 @@
 module Table
   ( Table
-  , isEmpty
-  , empty
   , fromList, toList
+  , get, update, updateMany
   , map, indexedMap
   , foldl, foldr, indexedFoldl, indexedFoldr
-  , get, update, updateMany
   )
   where
 
@@ -17,18 +15,22 @@ import Native.Table
 type Table a = Table
 
 
-empty : Table a
-empty =
-  Native.Table.empty
+
+-- CONVERSIONS
+
+
+fromList : List a -> Table a
+fromList =
+  Native.Table.fromList
+
+
+toList : Table a -> List a
+toList table =
+  foldr (::) [] table
 
 
 
 -- INQUIRIES
-
-
-isEmpty : Table a -> Bool
-isEmpty table =
-  empty == table
 
 
 get : Int -> Table a -> Maybe a
@@ -44,20 +46,6 @@ update =
 updateMany : List (Int, a -> a) -> Table a -> Table a
 updateMany =
   Native.Table.updateMany
-
-
-
--- CONVERSIONS
-
-
-fromList : List a -> Table a
-fromList =
-  Native.Table.fromList
-
-
-toList : Table a -> List a
-toList table =
-  foldr (::) [] table
 
 
 
