@@ -2,24 +2,21 @@
 // elm runtime
 // returns an object where:
 //      keys are names to be accessed in pure Elm
-//      values are either functions or values
+//      are either functions or
 var make = function make(elm) {
     // If Native isn't already bound on elm, bind it!
     elm.Native = elm.Native || {};
     // then the same for our module
     elm.Native.Table = elm.Native.Table || {};
 
-    // `values` is where the object returned by make ends up internally
+    // ` is where the object returned by make ends up internally
     // return if it's already set, since you only want one definition of
-    // values for speed reasons
-    if (elm.Native.Table.values) return elm.Native.Table.values;
+    // for speed reasons
+    if (elm.Native.Table) return elm.Native.Table;
 
     var Maybe = Elm.Maybe.make(elm);
 
-    var empty = {
-        ctor : 'Table',
-        values : []
-    };
+    var empty = [];
 
     var listLength = function(xs){
         var i = 0;
@@ -53,14 +50,11 @@ var make = function make(elm) {
             i++;
         }
 
-        return {
-            ctor: 'Table',
-            values: table
-        };
+        return table;
     };
 
     var length = function(table){
-        return table.values.length;
+        return table.length;
     };
 
     // when len is bigger than the table
@@ -73,24 +67,28 @@ var make = function make(elm) {
     };
 
     var get = function(i, table){
-        var len = table.values.length;
+        var len = table.length;
 
         if (isOutOfBounds(i, len)){
             return Maybe.Nothing;
         }
 
-        return Maybe.Just(table.values[i]);
+        return Maybe.Just(table[i]);
+    };
+
+    var unsafeGet = function(i, table){
+        return table[i];
     };
 
     var update = function(i, f, table){
-        var len = table.values.length;
+        var len = table.length;
 
         if (isOutOfBounds(i, len)){
             return table;
         }
 
-        var new_value = f(table.values[i]);
-        table.values[i] = new_value;
+        var new_value = f(table[i]);
+        table[i] = new_value;
         return table;
     };
 
@@ -105,10 +103,12 @@ var make = function make(elm) {
         return table;
     };
 
-    var map = function(f, table){
-        var len = table.values.length;
+    function map (f, table)
+    {
+        var len = table.length;
 
-        for (var i = 0; i < len; i++){
+        for (var i = 0; i < len; i++)
+        {
             table = update(i, f, table);
         }
 
@@ -116,7 +116,7 @@ var make = function make(elm) {
     };
 
     var indexedMap = function(f, table){
-        var len = table.values.length;
+        var len = table.length;
 
         for (var i = 0; i < len; i++){
             table = update(i, f(i), table);
@@ -126,10 +126,10 @@ var make = function make(elm) {
     };
 
     var foldl = function(f, init, table){
-        var len = table.values.length;
+        var len = table.length;
 
         for (var i = 0; i < len; i++){
-            var item = table.values[i];
+            var item = table[i];
 
             init = f(item)(init);
         }
@@ -138,10 +138,10 @@ var make = function make(elm) {
     };
 
     var foldr = function(f, init, table){
-        var len = table.values.length;
+        var len = table.length;
 
         for (var i = len - 1; i > -1; i--){
-            var item = table.values[i];
+            var item = table[i];
 
             init = f(item)(init);
         }
@@ -150,10 +150,10 @@ var make = function make(elm) {
     };
 
     var indexedFoldl = function(f, init, table){
-        var len = table.values.length;
+        var len = table.length;
 
         for (var i = 0; i < len; i++){
-            var item = table.values[i];
+            var item = table[i];
 
             init = f(i)(item)(init);
         }
@@ -162,10 +162,10 @@ var make = function make(elm) {
     };
 
     var indexedFoldr = function(f, init, table){
-        var len = table.values.length;
+        var len = table.length;
 
         for (var i = len; i > -1; i--){
-            var item = table.values[i];
+            var item = table[i];
 
             init = f(i)(item)(init);
         }
