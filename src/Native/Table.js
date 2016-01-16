@@ -10,173 +10,179 @@ Elm.Native.Table.make = function(localRuntime) {
 
 	var Maybe = Elm.Maybe.make(elm);
 
-	var empty = [];
 
-	var listLength = function(xs){
-		var i = 0;
-		while (xs.ctor !== '[]')
+	function fromList(list)
+	{
+		var temp = list;
+		var len = 0;
+		while (temp.ctor !== '[]')
 		{
-			i++;
-			xs = xs._1;
+			temp = temp._1;
+			++len;
 		}
 
-		return i;
-	}
-
-	/*
-		Intended to be a faster version of List.toArray
-		Preallocates a block array as per https://www.youtube.com/watch?v=UJPdhx5zTaw
-	*/
-	var fromList = function(list){
-		var length = listLength(list);
-
-		if (length < 1)
+		if (len < 1)
 		{
-			return empty;
+			return [];
 		}
 
-		var table = new Array(length);
+		var table = new Array(len);
 		var i = 0;
 
-		while (list.ctor !== '[]') {
+		while (list.ctor !== '[]')
+		{
 			table[i] = list._0;
 			list = list._1;
-			i++;
+			++i;
 		}
 
 		return table;
-	};
+	}
 
-	var length = function(table){
-		return table.length;
-	};
 
-	// when len is bigger than the table
-	// return early. we don't want to
-	// create non-sequential arrays as
-	// they get turned into hashmaps and
-	// lose performance and size bonuses
-	var isOutOfBounds = function(i, len){
-		return (i < 0 || i >= len);
-	};
-
-	var get = function(i, table){
-		var len = table.length;
-
-		if (isOutOfBounds(i, len)){
+	function get(i, table)
+	{
+		if (i < 0 || i >= table.length)
+		{
 			return Maybe.Nothing;
 		}
 
 		return Maybe.Just(table[i]);
-	};
+	}
 
-	var unsafeGet = function(i, table){
+
+	function getUnsafe(i, table)
+	{
 		return table[i];
-	};
+	}
 
-	var update = function(i, f, table){
-		var len = table.length;
 
-		if (isOutOfBounds(i, len)){
-			return table;
+	function clone(table)
+	{
+		var i = table.length;
+		var newTable = new Array(i);
+		while (i--)
+		{
+			newTable[i] = table[i];
 		}
+	}
 
-		var new_value = f(table[i]);
-		table[i] = new_value;
-		return table;
-	};
 
-	var updateMany = function(batch, table){
-		batch.forEach(function(v){
-			index = v._0;
-			f = v._1;
-
-			table = update(index, f);
-		});
-
-		return table;
-	};
-
-	function map (f, table)
+	function update(index, func, table)
 	{
 		var len = table.length;
 
-		for (var i = 0; i < len; i++)
+		if (index < 0 || index >= len)
 		{
-			table = update(i, f, table);
+			return table;
 		}
 
-		return table;
-	};
+		var newTable = clone(table);
+		newTable[index] = func(newTable[index]);
+		return newTable;
+	}
 
-	var indexedMap = function(f, table){
+
+	function updateMany(updaters, table)
+	{
+		var len = table.length;
+		var newTable = clone(table);
+
+		while (updaters.ctor !== '[]')
+		{
+			var updater = updaters._0;
+			var index = updater._0;
+			updaters = updaters._1;
+			if (index < 0 || index >= len)
+			{
+				continue;
+			}
+			newTable[index] = updater._1(newTable[index]);
+		}
+
+		return newTable;
+	}
+
+
+	function map(func, table)
+	{
+		var i = table.length;
+		var newTable = new Array(i);
+		while (--i)
+		{
+			newTable[i] = func(table[i]);
+		}
+		return newTable;
+	}
+
+
+	function indexedMap(func, table)
+	{
+		var i = table.length;
+		var newTable = new Array(i);
+		while (--i)
+		{
+			newTable[i] = A2(func, i, table[i]);
+		}
+		return newTable;
+	}
+
+
+	function foldl(func, acc, table)
+	{
 		var len = table.length;
 
-		for (var i = 0; i < len; i++){
-			table = update(i, f(i), table);
+		for (var i = 0; i < len; ++i)
+		{
+			acc = A2(func, table[i], acc);
 		}
+		return acc;
+	}
 
-		return table;
-	};
 
-	var foldl = function(f, init, table){
+	function foldr(func, acc, table)
+	{
+		var i = table.length;
+
+		while (--i)
+		{
+			acc = A2(func, table[i], acc);
+		}
+		return acc;
+	}
+
+
+	function indexedFoldl(func, acc, table)
+	{
 		var len = table.length;
 
-		for (var i = 0; i < len; i++){
-			var item = table[i];
-
-			init = f(item)(init);
+		for (var i = 0; i < len; ++i)
+		{
+			acc = A3(func, i, table[i], acc);
 		}
+		return acc;
+	}
 
-		return init;
-	};
 
-	var foldr = function(f, init, table){
-		var len = table.length;
+	function indexedFoldr(func, acc, table)
+	{
+		var i = table.length;
 
-		for (var i = len - 1; i > -1; i--){
-			var item = table[i];
-
-			init = f(item)(init);
+		while (--i)
+		{
+			acc = A3(func, i, table[i], acc);
 		}
-
-		return init;
-	};
-
-	var indexedFoldl = function(f, init, table){
-		var len = table.length;
-
-		for (var i = 0; i < len; i++){
-			var item = table[i];
-
-			init = f(i)(item)(init);
-		}
-
-		return init;
-	};
-
-	var indexedFoldr = function(f, init, table){
-		var len = table.length;
-
-		for (var i = len; i > -1; i--){
-			var item = table[i];
-
-			init = f(i)(item)(init);
-		}
-
-		return init;
-	};
+		return acc;
+	}
 
 
 	return localRuntime.Native.Table.values = {
-		empty: empty,
 		fromList: fromList,
-		length: length,
 		get: F2(get),
-		map: F2(map),
-		indexedMap: F2(indexedMap),
 		update: F2(update),
 		updateMany: F2(updateMany),
+		map: F2(map),
+		indexedMap: F2(indexedMap),
 		foldr: F3(foldr),
 		foldl: F3(foldl),
 		indexedFoldr: F3(indexedFoldr),
