@@ -69,7 +69,7 @@ initializeHelp size offset height valueByIndex =
 
 
 -- init : Int -> Int -> (Int -> a) -> Table a
-init size startingIndex func
+-- init size startingIndex func
 
 
 {-| Creates an array with a given length, filled with a default element.
@@ -81,14 +81,14 @@ Notice that `repeat 3 x` is the same as `initialize 3 (always x)`.
 -}
 repeat : Int -> a -> Array a
 repeat n e =
-  initialize n (always e)
+  Debug.crash "not yet implemented"
 
 
 {-| Create an array from a list.
 -}
 fromList : List a -> Array a
 fromList =
-  Native.Array.fromList
+  Debug.crash "not yet implemented"
 
 
 {-| Create a list of elements from an array.
@@ -97,7 +97,7 @@ fromList =
 -}
 toList : Array a -> List a
 toList =
-  Native.Array.toList
+  Debug.crash "not yet implemented"
 
 
 -- TODO: make this a native function.
@@ -108,7 +108,7 @@ paired with its index.
 -}
 toIndexedList : Array a -> List (Int, a)
 toIndexedList array =
-  List.map2 (,) [ 0 .. Native.Array.length array - 1 ] (Native.Array.toList array)
+  Debug.crash "not yet implemented"
 
 
 {-| Apply a function on every element in an array.
@@ -134,7 +134,7 @@ map func node =
 -}
 indexedMap : (Int -> a -> b) -> Array a -> Array b
 indexedMap =
-  Native.Array.indexedMap
+  Debug.crash "not yet implemented"
 
 
 {-| Reduce an array from the left. Read `foldl` as &ldquo;fold from the left&rdquo;.
@@ -177,14 +177,8 @@ foldr func acc array =
 -}
 filter : (a -> Bool) -> Array a -> Array a
 filter isOkay arr =
-  let
-    update x xs =
-      if isOkay x then
-        Native.Array.push x xs
-      else
-        xs
-  in
-    Native.Array.foldl update Native.Array.empty arr
+  Debug.crash "not yet implemented"
+
 
 {-| Return an empty array.
 
@@ -192,7 +186,8 @@ filter isOkay arr =
 -}
 empty : Array a
 empty =
-  Native.Array.empty
+  Debug.crash "not yet implemented"
+
 
 
 {-| Push an element to the end of an array.
@@ -201,7 +196,8 @@ empty =
 -}
 push : a -> Array a -> Array a
 push =
-  Native.Array.push
+  Debug.crash "not yet implemented"
+
 
 
 {-| Return Just the element at the index or Nothing if the index is out of range.
@@ -214,10 +210,8 @@ push =
 -}
 get : Int -> Array a -> Maybe a
 get i array =
-  if 0 <= i && i < Native.Array.length array then
-    Just (Native.Array.get i array)
-  else
-    Nothing
+  Debug.crash "not yet implemented"
+
 
 
 {-| Set the element at a particular index. Returns an updated array.
@@ -227,7 +221,8 @@ If the index is out of range, the array is unaltered.
 -}
 set : Int -> a -> Array a -> Array a
 set =
-  Native.Array.set
+  Debug.crash "not yet implemented"
+
 
 
 {-| Get a sub-section of an array: `(slice start end array)`. The `start` is a
@@ -248,7 +243,8 @@ This makes it pretty easy to `pop` the last element off of an array: `slice 0 -1
 -}
 slice : Int -> Int -> Array a -> Array a
 slice =
-  Native.Array.slice
+  Debug.crash "not yet implemented"
+
 
 
 {-| Return the length of an array.
@@ -257,7 +253,7 @@ slice =
 -}
 length : Array a -> Int
 length =
-  Native.Array.length
+  Debug.crash "not yet implemented"
 
 
 {-| Determine if an array is empty.
@@ -266,7 +262,8 @@ length =
 -}
 isEmpty : Array a -> Bool
 isEmpty array =
-    length array == 0
+  Debug.crash "not yet implemented"
+
 
 
 {-| Append two arrays to a new one.
@@ -275,4 +272,4 @@ isEmpty array =
 -}
 append : Array a -> Array a -> Array a
 append =
-  Native.Array.append
+  Debug.crash "not yet implemented"
