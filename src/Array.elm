@@ -27,8 +27,49 @@ the element at index `i` initialized to the result of `(f i)`.
     initialize 4 (always 0)  == fromList [0,0,0,0]
 -}
 initialize : Int -> (Int -> a) -> Array a
-initialize =
-  Native.Array.initialize
+initialize size valueByIndex =
+  let
+    height =
+      floor (logBase 32 size)
+  in
+
+
+
+initializeHelp : Int -> Int -> Int -> (Int -> a) -> Array a
+initializeHelp size offset height valueByIndex =
+  if height <= 0 then
+    Leaf (init 32 offset valueByIndex) -- wrong, need to handle relaxed ones, less than 32 elements
+
+  else
+    let
+      numSlots =
+        32 ^ height
+
+      slotsNeeded =
+        size - offset
+
+      newHeight =
+        height - 1
+
+      makeSubArray index =
+        initializeHelp size (offset + index * 32 ^ newHeight) newHeight valueByIndex
+    in
+      if numSlots <= slotsNeeded then
+        FullNode height (init 32 0 makeSubArray)
+
+      else
+        let
+          numberLessThan32 =
+            ceiling (32 * slotsNeeded / numSlots)
+
+          makeSubSizes index =
+            offset + index * 32 ^ newHeight
+        in
+          RelaxNode (init numberLessThan32 0 makeSubSizes) (init numberLessThan32 0 makeSubArray)
+
+
+-- init : Int -> Int -> (Int -> a) -> Table a
+init size startingIndex func
 
 
 {-| Creates an array with a given length, filled with a default element.
